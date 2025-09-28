@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 import stripe
 from ..config import settings
 from ..services.payment_service import create_checkout_session, handle_webhook, get_session_details
@@ -7,15 +8,16 @@ stripe.api_key = settings.stripe_secret_key
 
 router = APIRouter()
 
-@router.post("/create-checkout-session")
-def create_checkout_session_endpoint(
-    user_id: str,
-    plan_type: str,
-    success_url: str = "http://localhost:3000/dashboard?success=true",
+class CheckoutSessionRequest(BaseModel):
+    user_id: str
+    plan_type: str
+    success_url: str = "http://localhost:3000/dashboard?success=true"
     cancel_url: str = "http://localhost:3000/billing"
-):
+
+@router.post("/create-checkout-session")
+def create_checkout_session_endpoint(request: CheckoutSessionRequest):
     try:
-        session = create_checkout_session(user_id, plan_type, success_url, cancel_url)
+        session = create_checkout_session(request.user_id, request.plan_type, request.success_url, request.cancel_url)
         return {
             "checkout_url": session.url,
             "session_id": session.id

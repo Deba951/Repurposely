@@ -1,14 +1,22 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List
 from ..services.ai_service import repurpose_content
 from ..services.db_service import check_quota, log_usage
 
 router = APIRouter()
 
+class RepurposeRequest(BaseModel):
+    user_id: str
+    content: str
+    platforms: List[str]
+    tone: str
+
 @router.post("/repurpose")
-def repurpose(user_id: str, content: str, platforms: list, tone: str):
-    if not check_quota(user_id):
+def repurpose(request: RepurposeRequest):
+    if not check_quota(request.user_id):
         raise HTTPException(status_code=429, detail="Usage limit exceeded")
 
-    result = repurpose_content(content, platforms, tone)
-    log_usage(user_id, 'repurpose', 1)
+    result = repurpose_content(request.content, request.platforms, request.tone)
+    log_usage(request.user_id, 'repurpose', 1)
     return result
