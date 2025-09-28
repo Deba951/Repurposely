@@ -11,3 +11,7 @@ app.include_router(payments.router, prefix="/payments", tags=["Payments"])
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Repurposely API"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
